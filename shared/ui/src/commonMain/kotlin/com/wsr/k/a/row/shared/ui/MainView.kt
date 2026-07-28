@@ -10,6 +10,6 @@ fun MainView() {
     KInARowTheme {
         val presenter = rememberPresenter { MainPresenter() }
         val uiState = presenter.uiState
-        Text(text = uiState.value)
+        Text(text = uiState.toString())
     }
 }
