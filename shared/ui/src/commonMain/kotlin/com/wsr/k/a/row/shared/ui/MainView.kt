@@ -8,6 +8,8 @@ import com.wsr.k.a.row.shared.ui.theme.KInARowTheme
 @Composable
 fun MainView() {
     KInARowTheme {
-        Text(text = helloWorld())
+        val presenter = rememberPresenter { MainPresenter() }
+        val uiState = presenter.uiState
+        Text(text = uiState.value)
     }
 }

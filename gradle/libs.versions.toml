@@ -16,6 +16,7 @@ androidx-compose-navigation = "2.9.8"
 compose-multiplatform = "1.11.1"
 compose-navigation = "2.9.2"
 compose-material3 = "1.11.0-alpha07"
+compose-rin = "0.4.0"
 
 # VRT
 junit = "4.13.2"
@@ -54,6 +55,7 @@ compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-to
 compose-ui-tooling = { group = "org.jetbrains.compose.ui", name = "ui-tooling", version.ref = "compose-multiplatform" }
 compose-navigation = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "compose-navigation" }
 compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-material3" }
+compose-rin = { group = "io.github.takahirom.rin", name = "rin", version.ref = "compose-rin" }
 
 # VRT
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -88,6 +90,7 @@ compose = [
     "compose-ui-tooling",
     "compose-navigation",
     "compose-material3",
+    "compose-rin"
 ]
 vrt = [
     "junit",
