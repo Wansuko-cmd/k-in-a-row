@@ -10,7 +10,7 @@ kotlin {
     sourceSets {
         getByName("commonMain")  {
             dependencies {
-                implementation(projects.shared.lib)
+                implementation(projects.shared.model)
 
                 implementation(libs.kotlin.coroutine)
                 implementation(libs.kotlin.datetime)

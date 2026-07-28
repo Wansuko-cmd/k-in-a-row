@@ -28,6 +28,6 @@ dependencyResolutionManagement {
 rootProject.name = "KInARow"
 include(":androidApp")
 
-include(":shared:lib")
 include(":shared:domain")
+include(":shared:model")
 include(":shared:ui")
