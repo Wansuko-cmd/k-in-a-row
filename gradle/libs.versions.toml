@@ -3,10 +3,14 @@
 kotlin = "2.4.10"
 coroutine = "1.11.0"
 datetime = "0.8.0-0.6.x-compat"
+kotlinx-serialization = "1.11.0"
 
 # AndroidX
 androidx = "1.19.0"
 androidx-lifecycle-runtime = "2.11.0"
+
+# knist
+knist = "0.0.32-alpha01"
 
 # Compose
 androidx-compose-bom = "2026.06.01"
@@ -34,10 +38,14 @@ ktlint = "14.2.0"
 # Kotlin
 kotlin-coroutine = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutine" }
 kotlin-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime" }
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 
 # AndroidX
 androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx" }
 androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidx-lifecycle-runtime" }
+
+# knist
+knist = { group = "com.github.Wansuko-cmd.knist", name = "network", version.ref = "knist" }
 
 # Compose
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
@@ -106,6 +114,7 @@ vrt = [
 [plugins]
 # Kotlin
 kotlin = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
 # Android

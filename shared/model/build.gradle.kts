@@ -1,5 +1,6 @@
 plugins {
     alias(buildLogic.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -10,10 +11,13 @@ kotlin {
     sourceSets {
         getByName("commonMain")  {
             dependencies {
+                implementation(projects.shared.domain)
+
                 implementation(libs.kotlin.coroutine)
                 implementation(libs.kotlin.datetime)
+                implementation(libs.kotlinx.serialization.core)
 
-                implementation(projects.shared.domain)
+                implementation(libs.knist)
             }
         }
     }
