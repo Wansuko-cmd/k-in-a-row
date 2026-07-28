@@ -1,0 +1,113 @@
+[versions]
+# Kotlin
+kotlin = "2.4.10"
+coroutine = "1.11.0"
+datetime = "0.8.0-0.6.x-compat"
+
+# AndroidX
+androidx = "1.19.0"
+androidx-lifecycle-runtime = "2.11.0"
+
+# Compose
+androidx-compose-bom = "2026.06.01"
+androidx-compose-lifecycle = "2.11.0"
+androidx-compose-navigation = "2.9.8"
+
+compose-multiplatform = "1.11.1"
+compose-navigation = "2.9.2"
+compose-material3 = "1.11.0-alpha07"
+
+# VRT
+junit = "4.13.2"
+robolectric = "4.16.1"
+roborazzi = "1.70.0"
+composable-preview-scanner = "0.9.1"
+
+# Gradle
+gradle-android = "9.3.1"
+
+# Ktlint
+ktlint = "14.2.0"
+
+[libraries]
+# Kotlin
+kotlin-coroutine = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutine" }
+kotlin-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime" }
+
+# AndroidX
+androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx" }
+androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidx-lifecycle-runtime" }
+
+# Compose
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-lifecycle = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-compose-lifecycle" }
+androidx-compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-compose-navigation" }
+
+compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
+compose-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-multiplatform" }
+compose-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
+compose-components-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
+compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview", version.ref = "compose-multiplatform" }
+compose-ui-tooling = { group = "org.jetbrains.compose.ui", name = "ui-tooling", version.ref = "compose-multiplatform" }
+compose-navigation = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "compose-navigation" }
+compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-material3" }
+
+# VRT
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+roborazzi-core = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
+roborazzi-composable-preview-scanner = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose-preview-scanner-support", version.ref = "roborazzi" }
+composable-preview-scanner = { group = "io.github.sergio-sastre.ComposablePreviewScanner", name = "android", version.ref = "composable-preview-scanner" }
+
+# Gradle
+gradle-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+gradle-android = { group = "com.android.tools.build", name = "gradle", version.ref = "gradle-android" }
+gradle-roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi-gradle-plugin", version.ref = "roborazzi" }
+
+[bundles]
+androidx = ["androidx-core", "androidx-lifecycle-runtime"]
+androidx-compose = [
+    "androidx-compose-ui",
+    "androidx-compose-tooling",
+    "androidx-compose-preview",
+    "androidx-compose-lifecycle",
+    "androidx-compose-navigation",
+]
+compose = [
+    "compose-runtime",
+    "compose-foundation",
+    "compose-ui",
+    "compose-components-resources",
+    "compose-ui-tooling-preview",
+    "compose-ui-tooling",
+    "compose-navigation",
+    "compose-material3",
+]
+vrt = [
+    "junit",
+    "androidx-compose-ui-test-junit4",
+    "robolectric",
+    "roborazzi-core",
+    "roborazzi-compose",
+    "roborazzi-rule",
+    "roborazzi-composable-preview-scanner",
+    "composable-preview-scanner",
+]
+
+[plugins]
+# Kotlin
+kotlin = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+
+# Android
+android-application = { id = "com.android.application", version.ref = "gradle-android" }
+android-library = { id = "com.android.library", version.ref = "gradle-android" }
+android-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "gradle-android" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

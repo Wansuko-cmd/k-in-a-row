@@ -1,0 +1,12 @@
+[versions]
+# SDK
+android-compileSdk = "37"
+android-minSdk = "29"
+android-targetSdk = "37"
+
+[plugins]
+# Android
+android-compose-application = { id = "com.wsr.k.a.row.compose.application", version = "unspecified" }
+android-compose-library = { id = "com.wsr.k.a.row.compose.library", version = "unspecified" }
+compose-multiplatform = { id = "com.wsr.k.a.row.compose.multiplatform", version = "unspecified" }
+kotlin-multiplatform = { id = "com.wsr.k.a.row.kotlin.multiplatform", version = "unspecified" }

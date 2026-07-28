@@ -1,0 +1,131 @@
+name: 'VRTを実行'
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  COMPANION_BRANCH_NAME: companion_${{ github.head_ref }}
+
+jobs:
+  vrt:
+    runs-on: ubuntu-latest
+    steps:
+      # 事前準備
+      - name: 仮想ブランチにチェックアウト
+        uses: actions/checkout@v7
+
+      - name: Javaのセットアップ
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Gradleのセットアップ
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_CACHE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
+      - name: ./gradlewに権限を付与
+        run: |
+          chmod 777 ${{ github.workspace }}/gradlew
+
+      # 記録フェーズ
+      - name: 比較元のブランチにチェックアウト
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: 比較元の画像を生成
+        run: |
+          ${{ github.workspace }}/gradlew recordRoborazziDebug
+
+      - name: 比較元のスクリーンショットをアップロードする
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot
+          path: "**/build"
+
+      # 比較フェーズ
+      - name: 比較先のブランチにチェックアウト
+        uses: actions/checkout@v7
+
+      - name: 比較元のスクリーンショットをダウンロードする
+        uses: actions/download-artifact@v8
+        with:
+          name: screenshot
+
+      - name: 比較画像を生成
+        run: |
+          ${{ github.workspace }}/gradlew compareRoborazziDebug
+
+      - name: 差分検知
+        id: check_diff
+        run: |
+          screenshot_diff=$(find . -path "*/build/outputs/roborazzi/*" -name "*_compare.png")
+          echo "screenshot_diff=$screenshot_diff"
+
+          has_diff=$(test -n "$screenshot_diff" && echo "true" || echo "false")
+          echo "has_diff=$has_diff" >> "$GITHUB_OUTPUT"
+
+      # 差分なしの時
+      - name: 差分ファイル保存用のブランチを削除
+        if: steps.check_diff.outputs.has_diff == 'false'
+        run: |
+          git push origin --delete "$COMPANION_BRANCH_NAME" || true
+
+      - name: 差分がないことをコメント
+        if: steps.check_diff.outputs.has_diff == 'false'
+        run: |
+          gh pr comment ${{ github.event.number }} --body "差分なし" --edit-last --create-if-none
+
+      # 差分ありの時
+      - name: 差分ファイルをアップロード
+        if: steps.check_diff.outputs.has_diff == 'true'
+        run: |
+          git config --global user.name "VRT Bot"
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+          git branch -D "$COMPANION_BRANCH_NAME" || true
+          git checkout --orphan "$COMPANION_BRANCH_NAME"
+          git rm -rf .
+          find . -path "*/build/outputs/roborazzi/*" -name "*_compare.png" | xargs -I{} mv {} ./
+          git add *_compare.png
+          git commit -m "差分ファイルを追加"
+          git push origin $COMPANION_BRANCH_NAME -f
+
+      - name: 差分表を作成
+        id: generate_diff_table
+        if: steps.check_diff.outputs.has_diff == 'true'
+        run: |
+          files=$(ls | grep "_compare.png")
+
+          delimiter="$(openssl rand -hex 8)"
+          # 表ヘッダー
+          {
+            echo "table<<${delimiter}"
+
+            echo "差分表"
+            echo "| File name | Image |"
+            echo "|-------|-------|"
+          } >> "$GITHUB_OUTPUT"
+          
+          # 差分ファイル追加
+          for file in $files; do
+            # Get the file name and insert newlines every 20 characters
+            fileName=$(basename "$file" | sed -r 's/(.{20})/\1<br>/g')
+            urlPart="${COMPANION_BRANCH_NAME//#/%23}/${file//#/%23}"
+            echo "| [$fileName](https://github.com/${{ github.repository }}/blob/$urlPart) | ![](https://github.com/${{ github.repository }}/blob/$urlPart?raw=true) |" >> "$GITHUB_OUTPUT"
+          done
+
+          echo "${delimiter}" >> "$GITHUB_OUTPUT"
+
+      - name: 差分表をコメント
+        if: steps.check_diff.outputs.has_diff == 'true'
+        run: |
+          gh pr comment ${{ github.event.number }} --body "${{ steps.generate_diff_table.outputs.table }}" --edit-last --create-if-none
