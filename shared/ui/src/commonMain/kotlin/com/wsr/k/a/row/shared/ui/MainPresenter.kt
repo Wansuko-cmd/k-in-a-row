@@ -2,6 +2,8 @@ package com.wsr.k.a.row.shared.ui
 
 import com.wsr.k.a.row.shared.domain.Board
 import com.wsr.k.a.row.shared.domain.Piece
+import com.wsr.k.a.row.shared.model.RandomModel
+import kotlinx.coroutines.runBlocking
 
 private const val COL = 8
 private const val ROW = 8
@@ -13,9 +15,29 @@ class MainPresenter(
     fun onClick(i: Int, j: Int, turn: Piece) {
         if (i !in 0 until COL || j !in 0 until ROW || board.winner != null) return
         board[i, j] = turn
+
         uiState = uiState.copy(
             board = BoardUiState.from(board),
             turn = when (turn) {
+                Piece.BLACK -> Piece.WHITE
+                Piece.WHITE -> Piece.BLACK
+            },
+            winner = board.winner,
+        )
+
+        placeCPU()
+    }
+
+    private fun placeCPU() {
+        val model = when (uiState.cpu) {
+            CPUUiState.Random -> RandomModel()
+        }
+        val (i, j) = runBlocking { model.choice(board) } ?: return
+        board[i, j] = uiState.turn
+
+        uiState = uiState.copy(
+            board = BoardUiState.from(board),
+            turn = when (uiState.turn) {
                 Piece.BLACK -> Piece.WHITE
                 Piece.WHITE -> Piece.BLACK
             },
@@ -33,6 +55,8 @@ data class MainUiState(
     val board: BoardUiState = BoardUiState(),
     val turn: Piece = Piece.BLACK,
     val winner: Piece? = null,
+    val cpu: CPUUiState = CPUUiState.Random,
+    val isLoading: Boolean = turn == Piece.WHITE,
 ) : UiState
 
 data class BoardUiState(
@@ -53,4 +77,8 @@ data class BoardUiState(
             }
         )
     }
+}
+
+enum class CPUUiState {
+    Random;
 }
