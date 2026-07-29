@@ -8,7 +8,7 @@ kotlin {
     }
 
     sourceSets {
-        getByName("commonMain")  {
+        commonMain  {
             dependencies {
                 implementation(libs.kotlin.coroutine)
                 implementation(libs.kotlin.datetime)

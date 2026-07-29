@@ -22,6 +22,9 @@ compose-navigation = "2.9.2"
 compose-material3 = "1.11.0-alpha07"
 compose-rin = "0.4.0"
 
+# Test
+kotlin-test = "2.4.10-RC2"
+
 # VRT
 junit = "4.13.2"
 robolectric = "4.16.1"
@@ -64,6 +67,9 @@ compose-ui-tooling = { group = "org.jetbrains.compose.ui", name = "ui-tooling", 
 compose-navigation = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "compose-navigation" }
 compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-material3" }
 compose-rin = { group = "io.github.takahirom.rin", name = "rin", version.ref = "compose-rin" }
+
+# Test
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin-test" }
 
 # VRT
 junit = { group = "junit", name = "junit", version.ref = "junit" }

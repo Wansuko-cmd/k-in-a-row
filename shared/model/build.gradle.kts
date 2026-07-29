@@ -6,10 +6,11 @@ plugins {
 kotlin {
     android {
         namespace = "com.wsr.k.a.row.shared.model"
+        withHostTestBuilder { sourceSetTreeName = "test" }
     }
 
     sourceSets {
-        getByName("commonMain")  {
+        commonMain {
             dependencies {
                 implementation(projects.shared.domain)
 
@@ -18,6 +19,12 @@ kotlin {
                 implementation(libs.kotlinx.serialization.core)
 
                 implementation(libs.knist)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(libs.kotlin.test)
             }
         }
     }

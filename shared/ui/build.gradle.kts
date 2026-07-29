@@ -8,7 +8,7 @@ kotlin {
     }
 
     sourceSets {
-        getByName("commonMain")  {
+        commonMain  {
             dependencies {
                 implementation(projects.shared.domain)
                 implementation(projects.shared.model)
