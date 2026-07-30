@@ -10,7 +10,8 @@ androidx = "1.19.0"
 androidx-lifecycle-runtime = "2.11.0"
 
 # knist
-knist = "0.0.32-alpha01"
+knist = "0.0.32-alpha02"
+okio = "3.17.0"
 
 # Compose
 androidx-compose-bom = "2026.06.01"
@@ -49,6 +50,7 @@ androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-r
 
 # knist
 knist = { group = "com.github.Wansuko-cmd.knist", name = "network", version.ref = "knist" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
 # Compose
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }

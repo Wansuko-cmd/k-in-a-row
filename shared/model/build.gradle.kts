@@ -19,6 +19,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization.core)
 
                 implementation(libs.knist)
+                implementation(libs.okio)
             }
         }
 

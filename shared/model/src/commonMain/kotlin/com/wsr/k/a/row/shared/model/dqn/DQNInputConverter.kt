@@ -22,7 +22,7 @@ data class DQNInputConverter(
     override val outputK: Int = row
 
     override fun encode(input: List<Board>): Batch<IOType.D3> {
-        val value = FloatArray(input.size * 2 * outputI * outputJ)
+        val value = FloatArray(input.size * outputI * outputJ * outputK)
         input.forEachIndexed { index, board ->
             repeat(col) { i ->
                 repeat(row) { j ->

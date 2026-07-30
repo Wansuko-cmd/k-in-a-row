@@ -15,7 +15,7 @@ class Board(
 
     operator fun get(i: Int, j: Int): Piece? {
         val index = i * row + j
-        check(i in 0 until col && j in 0 until row)
+        check(i in 0 until col && j in 0 until row) { "i: $i, j: $j" }
         return Piece.from(value[index])
     }
 
@@ -23,21 +23,25 @@ class Board(
         if (winner != null) return
 
         val index = i * row + j
-        check(Piece.from(value[index]) == null)
+        check(Piece.from(value[index]) == null) { "i: $i, j: $j" }
         value[index] = piece.value
 
         winner = scanWinner()
     }
 
     private fun scanWinner(): Piece? {
+        var hasEmpty = false
         for (i in 0 until col) {
             for (j in 0 until row) {
                 val index = i * row + j
-                val piece = Piece.from(value[index]) ?: continue
+                val piece = Piece.from(value[index]) ?: run {
+                    hasEmpty = true
+                    continue
+                }
                 if (moreK(i, j, piece)) return piece
             }
         }
-        return null
+        return if (hasEmpty) null else Piece.WHITE
     }
 
     private fun moreK(i: Int, j: Int, piece: Piece): Boolean {
@@ -63,6 +67,8 @@ class Board(
         }
         return count
     }
+
+    fun copy() = Board(col = col, row = row, k = k, value = value.clone())
 }
 
 enum class Piece(val value: Int) {

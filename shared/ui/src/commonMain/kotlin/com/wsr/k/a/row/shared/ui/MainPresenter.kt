@@ -3,6 +3,7 @@ package com.wsr.k.a.row.shared.ui
 import com.wsr.k.a.row.shared.domain.Board
 import com.wsr.k.a.row.shared.domain.Piece
 import com.wsr.k.a.row.shared.model.RandomModel
+import com.wsr.k.a.row.shared.model.dqn.DQNModel
 import kotlinx.coroutines.runBlocking
 
 private const val COL = 8
@@ -28,9 +29,12 @@ class MainPresenter(
         placeCPU()
     }
 
+    private val dqn = DQNModel()
+
     private fun placeCPU() {
         val model = when (uiState.cpu) {
             CPUUiState.Random -> RandomModel()
+            CPUUiState.DQN -> dqn
         }
         val (i, j) = runBlocking { model.choice(board) } ?: return
         board[i, j] = uiState.turn
@@ -55,7 +59,7 @@ data class MainUiState(
     val board: BoardUiState = BoardUiState(),
     val turn: Piece = Piece.BLACK,
     val winner: Piece? = null,
-    val cpu: CPUUiState = CPUUiState.Random,
+    val cpu: CPUUiState = CPUUiState.DQN,
     val isLoading: Boolean = turn == Piece.WHITE,
 ) : UiState
 
@@ -80,5 +84,6 @@ data class BoardUiState(
 }
 
 enum class CPUUiState {
-    Random;
+    Random,
+    DQN;
 }
