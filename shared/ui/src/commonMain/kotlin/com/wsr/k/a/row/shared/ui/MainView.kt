@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wsr.k.a.row.shared.domain.Piece
@@ -31,40 +32,52 @@ import com.wsr.k.a.row.shared.ui.theme.KInARowTheme
 fun MainView() {
     KInARowTheme {
         val presenter = rememberPresenter { MainPresenter() }
-        val uiState = presenter.uiState
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-                .padding(horizontal = 8.dp),
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Board(
-                board = uiState.board,
-                onClick = { i, j -> presenter.onClick(i, j, uiState.turn) },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                modifier = Modifier.height(24.dp),
-                text = when (uiState.winner) {
-                    null -> ""
-                    Piece.BLACK -> "黒の勝ち"
-                    Piece.WHITE -> "白の勝ち"
-                },
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { presenter.onReset() },
-            ) {
-                Text(text = "リセット", fontSize = 16.sp)
-            }
-        }
+        MainScreen(
+            uiState = presenter.uiState,
+            onClickBoard = presenter::onClick,
+            onClickReset = presenter::onReset,
+        )
+    }
+}
 
-        if (uiState.isLoading) {
-            LoadingIndicator(modifier = Modifier.fillMaxSize())
+@Composable
+private fun MainScreen(
+    uiState: MainUiState,
+    onClickBoard: (i: Int, j: Int, turn: Piece) -> Unit,
+    onClickReset: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding()
+            .padding(horizontal = 8.dp),
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Board(
+            board = uiState.board,
+            onClick = { i, j -> onClickBoard(i, j, uiState.turn) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            modifier = Modifier.height(24.dp),
+            text = when (uiState.winner) {
+                null -> ""
+                Piece.BLACK -> "黒の勝ち"
+                Piece.WHITE -> "白の勝ち"
+            },
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onClickReset,
+        ) {
+            Text(text = "リセット", fontSize = 16.sp)
         }
+    }
+
+    if (uiState.isLoading) {
+        LoadingIndicator(modifier = Modifier.fillMaxSize())
     }
 }
 
@@ -111,5 +124,28 @@ private fun Piece(value: Piece?, modifier: Modifier = Modifier) {
                     .border(width = 1.dp, color = Color.Gray, shape = CircleShape),
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PreviewMainScreen() {
+    KInARowTheme {
+        val board = BoardUiState(
+            col = 8,
+            row = 8,
+            value = List(8 * 8) { index ->
+                when (index % 3) {
+                    1 -> Piece.WHITE
+                    2 -> Piece.BLACK
+                    else -> null
+                }
+            }
+        )
+        MainScreen(
+            uiState = MainUiState(board = board),
+            onClickBoard = { _, _, _ -> },
+            onClickReset = {},
+        )
     }
 }
