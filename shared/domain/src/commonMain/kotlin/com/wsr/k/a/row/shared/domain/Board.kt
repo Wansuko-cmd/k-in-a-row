@@ -14,19 +14,21 @@ class Board(
         private set
 
     operator fun get(i: Int, j: Int): Piece? {
-        val index = i * row + j
         check(i in 0 until col && j in 0 until row) { "i: $i, j: $j" }
+        val index = i * row + j
         return Piece.from(value[index])
     }
 
-    operator fun set(i: Int, j: Int, piece: Piece) {
-        if (winner != null) return
+    operator fun set(i: Int, j: Int, piece: Piece): Boolean {
+        check(i in 0 until col && j in 0 until row) { "i: $i, j: $j" }
+        if (winner != null) return false
 
         val index = i * row + j
-        check(Piece.from(value[index]) == null) { "i: $i, j: $j" }
+        if (Piece.from(value[index]) != null) return false
         value[index] = piece.value
 
         winner = scanWinner()
+        return true
     }
 
     private fun scanWinner(): Piece? {

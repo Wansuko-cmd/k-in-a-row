@@ -15,7 +15,7 @@ class MainPresenter(
 ) : Presenter<MainUiState, UiEvent>(MainUiState(board = BoardUiState.from(board))) {
     fun onClick(i: Int, j: Int, turn: Piece) {
         if (i !in 0 until COL || j !in 0 until ROW || board.winner != null) return
-        board[i, j] = turn
+        if (!board.set(i, j, turn)) return
 
         uiState = uiState.copy(
             board = BoardUiState.from(board),
@@ -37,7 +37,7 @@ class MainPresenter(
             CPUUiState.DQN -> dqn
         }
         val (i, j) = runBlocking { model.choice(board) } ?: return
-        board[i, j] = uiState.turn
+        if (!board.set(i, j, uiState.turn)) return
 
         uiState = uiState.copy(
             board = BoardUiState.from(board),
