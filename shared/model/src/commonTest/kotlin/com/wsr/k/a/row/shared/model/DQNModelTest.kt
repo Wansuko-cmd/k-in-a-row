@@ -29,6 +29,7 @@ import com.wsr.knist.network.process.compute.bias.d3.bias
 import com.wsr.knist.network.process.compute.conv.convD2
 import com.wsr.knist.network.process.compute.function.relu.swish
 import com.wsr.knist.network.process.reshape.gad.globalAverageToD1
+import com.wsr.knist.network.process.reshape.reshape.reshapeToD1
 import kotlinx.coroutines.runBlocking
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -45,7 +46,7 @@ private val TURN = Piece.WHITE
 
 private const val TRAIN_COUNT = 10000
 private const val BATCH_SIZE = 32
-private const val BUFFER_CAPACITY = 128
+private const val BUFFER_CAPACITY = 5012
 
 private const val GAMMA = 0.9f
 private const val EPSILON = 0.1f
@@ -63,7 +64,7 @@ class DQNModelTest {
             input
                 .convD2(filter = 16, kernel = 3).bias().swish()
                 .convD2(filter = 32, kernel = 5).bias().swish()
-                .globalAverageToD1()
+                .reshapeToD1()
                 .affine(128).bias().swish()
                 .affine(COL * ROW)
                 .meanSquare()
@@ -125,6 +126,10 @@ class DQNAgent(
         repeat(count) { times ->
             val ep = epsilon(times)
             val board = Board(col = COL, row = ROW, k = K)
+            if (TURN == Piece.WHITE) {
+                val (i, j) = board.selectRandom()!!
+                board[i, j] = Piece.BLACK
+            }
             while (board.winner == null) {
                 // 予測を元に学習データを作成する
                 val expect = network.expect(listOf(board))[0]
