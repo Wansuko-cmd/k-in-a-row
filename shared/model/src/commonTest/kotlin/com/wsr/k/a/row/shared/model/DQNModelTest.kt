@@ -28,7 +28,6 @@ import com.wsr.knist.network.process.compute.bias.d1.bias
 import com.wsr.knist.network.process.compute.bias.d3.bias
 import com.wsr.knist.network.process.compute.conv.convD2
 import com.wsr.knist.network.process.compute.function.relu.swish
-import com.wsr.knist.network.process.reshape.gad.globalAverageToD1
 import com.wsr.knist.network.process.reshape.reshape.reshapeToD1
 import kotlinx.coroutines.runBlocking
 import okio.FileSystem
