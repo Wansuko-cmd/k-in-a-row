@@ -6,9 +6,9 @@ import com.wsr.k.a.row.shared.domain.Board
 import com.wsr.k.a.row.shared.domain.Piece
 import com.wsr.k.a.row.shared.model.dqn.DQNInputConverter
 import com.wsr.knist.batch.Batch
+import com.wsr.knist.batch.d1
 import com.wsr.knist.batch.get
-import com.wsr.knist.batch.shape.toBatch
-import com.wsr.knist.batch.shape.toList
+import com.wsr.knist.batch.i
 import com.wsr.knist.core.IOType
 import com.wsr.knist.core.d1
 import com.wsr.knist.core.get
@@ -75,7 +75,7 @@ class DQNModelTest {
         runBlocking {
             DQNAgent(
                 network = network,
-                opponent = { board, seed -> board.selectRandom(seed)!! },
+                opponent = { board -> board.selectRandom()!! },
             )
                 .train(count = TRAIN_COUNT, epsilon = { EPSILON })
 
@@ -91,7 +91,7 @@ class DQNModelTest {
                     )
                 DQNAgent(
                     network = network,
-                    opponent = { board, _ ->
+                    opponent = { board ->
                         runBlocking {
                             val expect = opponent.expect(listOf(board))[0]
                             board.select(expect)
@@ -112,13 +112,13 @@ class DQNModelTest {
 }
 
 // network -> 学習対象
-// opponent -> 対戦相手(決定的である必要がある)
+// opponent -> 対戦相手
 class DQNAgent(
     val network: Network.Src1.Sink1<List<Board>, Batch<IOType.D1>>,
-    val opponent: (board: Board, seed: Int) -> Pair<Int, Int>,
+    val opponent: (board: Board) -> Pair<Int, Int>,
 ) {
     private var targetNetwork = network.clone()
-    private val buffer: ArrayDeque<Pair<Board, suspend (IOType.D1) -> IOType.D1>> = ArrayDeque()
+    private val buffer: ArrayDeque<BufferData> = ArrayDeque()
 
     fun train(count: Int, epsilon: (i: Int) -> Float) = runBlocking {
         val losses = mutableListOf<Float>()
@@ -126,26 +126,22 @@ class DQNAgent(
             val ep = epsilon(times)
             val board = Board(col = COL, row = ROW, k = K)
             if (TURN == Piece.WHITE) {
-                val (i, j) = board.selectRandom()!!
+                val (i, j) = opponent(board)
                 board[i, j] = Piece.BLACK
             }
             while (board.winner == null) {
                 // 予測を元に学習データを作成する
-                val expect = network.expect(listOf(board))[0]
                 val (i, j) = if (Random.nextDouble(0.0, 1.0) >= ep) {
+                    val expect = network.expect(listOf(board))[0]
                     board.select(expect)
                 } else {
                     board.selectRandom() ?: continue
                 }
                 if (board[i, j] != null) continue
 
-                // Bufferにつめて後の学習に利用
-                val seed = Random.nextInt()
-                board.copy().also { board ->
-                    buffer.addLast(board to { it.calcLabel(board.copy(), i, j, TURN, seed) })
-                }
-                // boardの状態を進めるための処理
-                expect.calcLabel(board, i, j, TURN, seed)
+                val data = evaluate(board, i, j, TURN)
+                buffer.addLast(data)
+                board[i, j] = TURN
 
                 if (buffer.size <= BATCH_SIZE) continue
                 if (BUFFER_CAPACITY <= buffer.size) buffer.removeFirst()
@@ -153,13 +149,8 @@ class DQNAgent(
                 // 学習フェーズ
                 val trainData = buffer.drop(1).shuffled().take(BATCH_SIZE) + buffer.last()
                 val loss = network.train(
-                    input = trainData.map { (input, _) -> input },
-                    label = { exp ->
-                        exp.toList()
-                            .zip(trainData.map { (_, calcLabel) -> calcLabel })
-                            .map { (exp, calcLabel) -> runBlocking { calcLabel(exp) } }
-                            .toBatch()
-                    },
+                    input = trainData.map { it.current },
+                    label = { exp -> runBlocking { exp.calcLabel(trainData) } },
                 )
                 losses.add(loss.unwrap())
             }
@@ -171,40 +162,72 @@ class DQNAgent(
         }
     }
 
-    private suspend fun IOType.D1.calcLabel(
-        board: Board,
-        i: Int,
-        j: Int,
-        turn: Piece,
-        seed: Int,
-    ): IOType.D1 {
-        val label = evaluate(board, i, j, turn, seed)
-        val value = value.toFloatArray().also { it[i * board.row + j] = label }
-        return IOType.d1(value)
-    }
-
-    // boardに副作用を起こす
-    private suspend fun evaluate(board: Board, i: Int, j: Int, turn: Piece, seed: Int): Float {
-        if (board.winner != null) return 0f
-
-        // 勝利 -> 1f
-        board[i, j] = turn
-        if (board.winner != null) return 1f
-
-        // 敗北 -> -1f
-        val (i, j) = opponent(board, seed)
-        board[i, j] = if (turn == Piece.WHITE) Piece.BLACK else Piece.WHITE
-        if (board.winner != null) return -1f
-
-        // 途中 -> 'Q
-        val q = targetNetwork.expect(listOf(board))[0]
-            .let { expect ->
-                val (i, j) = board.select(expect)
-                expect[i * board.row + j]
+    private suspend fun Batch<IOType.D1>.calcLabel(data: List<BufferData>): Batch<IOType.D1> {
+        val value = value.toFloatArray()
+        val input = data.filterIsInstance<BufferData.Continue>().map { it.current }
+        val expect = targetNetwork.expect(input = input)
+        var count = 0
+        repeat(data.size) {
+            val data = data[it]
+            val label = when (data) {
+                is BufferData.Finish -> if (data.isWinner) 1f else -1f
+                is BufferData.Continue -> {
+                    val expect = expect[count++]
+                    val (i, j) = data.next.select(expect)
+                    GAMMA * expect[i * data.next.row + j].unwrap()
+                }
             }
-            .unwrap()
-        return GAMMA * q
+            val (i, j) = data.coordinate
+            value[(it * data.current.col + i) * data.current.row + j] = label
+        }
+        return Batch.d1(size = size, i = i, value = value)
     }
+
+    private fun evaluate(board: Board, i: Int, j: Int, turn: Piece): BufferData {
+        check(board.winner == null)
+        val next = board.copy()
+
+        // 勝利
+        board[i, j] = turn
+        if (board.winner != null) return BufferData.Finish(
+            current = board,
+            coordinate = i to j,
+            isWinner = true,
+        )
+
+        // 敗北
+        val (i, j) = opponent(board)
+        board[i, j] = if (turn == Piece.WHITE) Piece.BLACK else Piece.WHITE
+        if (board.winner != null) return BufferData.Finish(
+            current = board,
+            coordinate = i to j,
+            isWinner = false,
+        )
+
+        // 途中
+        return BufferData.Continue(
+            current = board,
+            coordinate = i to j,
+            next = next,
+        )
+    }
+}
+
+sealed interface BufferData {
+    val current: Board
+    val coordinate: Pair<Int, Int>
+
+    data class Finish(
+        override val current: Board,
+        override val coordinate: Pair<Int, Int>,
+        val isWinner: Boolean,
+    ) : BufferData
+
+    data class Continue(
+        override val current: Board,
+        override val coordinate: Pair<Int, Int>,
+        val next: Board,
+    ) : BufferData
 }
 
 private fun Board.selectRandom(seed: Int? = null): Pair<Int, Int>? {
