@@ -116,6 +116,7 @@ class DQNModelTest {
 class DQNAgent(
     val network: Network.Src1.Sink1<List<Board>, Batch<IOType.D1>>,
     val opponent: (board: Board) -> Pair<Int, Int>,
+    val isDouble: Boolean = false,
 ) {
     private var targetNetwork = network.clone()
     private val buffer: ArrayDeque<BufferData> = ArrayDeque()
@@ -172,14 +173,17 @@ class DQNAgent(
         val value = value.toFloatArray().clone()
         val input = data.filterIsInstance<BufferData.Continue>().map { it.next }
         val expect = targetNetwork.expect(input = input)
+        val action = if (isDouble) network.clone().expect(input = input) else expect
         var count = 0
         repeat(data.size) {
             val data = data[it]
             val label = when (data) {
                 is BufferData.Finish -> if (data.isWinner) 1f else -1f
                 is BufferData.Continue -> {
-                    val expect = expect[count++]
-                    val (i, j) = data.next.select(expect)
+                    val action = action[count]
+                    val expect = expect[count]
+                    count++
+                    val (i, j) = data.next.select(action)
                     GAMMA * expect[i * data.next.row + j].unwrap()
                 }
             }
