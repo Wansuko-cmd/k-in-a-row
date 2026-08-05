@@ -122,38 +122,35 @@ class DQNAgent(
 
     fun train(count: Int, epsilon: (i: Int) -> Float) = runBlocking {
         val losses = mutableListOf<Float>()
+        var board = createBoard()
         repeat(count) { times ->
             val ep = epsilon(times)
-            val board = Board(col = COL, row = ROW, k = K)
-            if (TURN == Piece.WHITE) {
-                val (i, j) = opponent(board)
-                board[i, j] = Piece.BLACK
+
+            // 予測を元に学習データを作成する
+            val (i, j) = if (Random.nextDouble(0.0, 1.0) >= ep) {
+                val expect = network.expect(listOf(board))[0]
+                board.select(expect)
+            } else {
+                board.selectRandom()!!
             }
-            while (board.winner == null) {
-                // 予測を元に学習データを作成する
-                val (i, j) = if (Random.nextDouble(0.0, 1.0) >= ep) {
-                    val expect = network.expect(listOf(board))[0]
-                    board.select(expect)
-                } else {
-                    board.selectRandom() ?: continue
-                }
-                if (board[i, j] != null) continue
 
-                val data = evaluate(board, i, j, TURN)
-                buffer.addLast(data)
-                board[i, j] = TURN
-
-                if (buffer.size <= BATCH_SIZE) continue
-                if (BUFFER_CAPACITY <= buffer.size) buffer.removeFirst()
-
-                // 学習フェーズ
-                val trainData = buffer.drop(1).shuffled().take(BATCH_SIZE) + buffer.last()
-                val loss = network.train(
-                    input = trainData.map { it.current },
-                    label = { exp -> runBlocking { exp.calcLabel(trainData) } },
-                )
-                losses.add(loss.unwrap())
+            val data = evaluate(board, i, j, TURN)
+            buffer.addLast(data)
+            board = when (data) {
+                is BufferData.Finish -> createBoard()
+                is BufferData.Continue -> data.next
             }
+
+            if (buffer.size <= BATCH_SIZE) return@repeat
+            if (BUFFER_CAPACITY <= buffer.size) buffer.removeFirst()
+
+            // 学習フェーズ
+            val trainData = buffer.drop(1).shuffled().take(BATCH_SIZE) + buffer.last()
+            val loss = network.train(
+                input = trainData.map { it.current },
+                label = { exp -> runBlocking { exp.calcLabel(trainData) } },
+            )
+            losses.add(loss.unwrap())
             if (times % 100 == 0) {
                 println("times: $times, loss: ${losses.average()}")
                 losses.removeAll { true }
@@ -162,9 +159,18 @@ class DQNAgent(
         }
     }
 
+    private fun createBoard(): Board {
+        val board = Board(col = COL, row = ROW, k = K)
+        if (TURN == Piece.WHITE) {
+            val (i, j) = opponent(board)
+            board[i, j] = Piece.BLACK
+        }
+        return board
+    }
+
     private suspend fun Batch<IOType.D1>.calcLabel(data: List<BufferData>): Batch<IOType.D1> {
-        val value = value.toFloatArray()
-        val input = data.filterIsInstance<BufferData.Continue>().map { it.current }
+        val value = value.toFloatArray().clone()
+        val input = data.filterIsInstance<BufferData.Continue>().map { it.next }
         val expect = targetNetwork.expect(input = input)
         var count = 0
         repeat(data.size) {
@@ -185,28 +191,29 @@ class DQNAgent(
 
     private fun evaluate(board: Board, i: Int, j: Int, turn: Piece): BufferData {
         check(board.winner == null)
+        val current = board.copy()
         val next = board.copy()
 
         // 勝利
-        board[i, j] = turn
-        if (board.winner != null) return BufferData.Finish(
-            current = board,
+        next[i, j] = turn
+        if (next.winner != null) return BufferData.Finish(
+            current = current,
             coordinate = i to j,
             isWinner = true,
         )
 
         // 敗北
-        val (i, j) = opponent(board)
-        board[i, j] = if (turn == Piece.WHITE) Piece.BLACK else Piece.WHITE
-        if (board.winner != null) return BufferData.Finish(
-            current = board,
+        val (oi, oj) = opponent(next)
+        next[oi, oj] = if (turn == Piece.WHITE) Piece.BLACK else Piece.WHITE
+        if (next.winner != null) return BufferData.Finish(
+            current = current,
             coordinate = i to j,
             isWinner = false,
         )
 
         // 途中
         return BufferData.Continue(
-            current = board,
+            current = current,
             coordinate = i to j,
             next = next,
         )
