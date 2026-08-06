@@ -150,7 +150,7 @@ class DQNAgent(
             }
 
             if (buffer.size <= BATCH_SIZE) return@repeat
-            if (BUFFER_CAPACITY <= buffer.size) buffer.removeFirst()
+            while (BUFFER_CAPACITY < buffer.size) buffer.removeFirst()
 
             // 学習フェーズ
             val trainData = buffer.drop(1).shuffled().take(BATCH_SIZE) + buffer.last()
