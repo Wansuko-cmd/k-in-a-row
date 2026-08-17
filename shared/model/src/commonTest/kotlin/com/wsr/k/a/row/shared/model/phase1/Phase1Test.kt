@@ -1,6 +1,6 @@
 @file:Suppress("NonAsciiCharacters")
 
-package com.wsr.k.a.row.shared.model
+package com.wsr.k.a.row.shared.model.phase1
 
 import com.wsr.k.a.row.shared.domain.Board
 import com.wsr.k.a.row.shared.domain.Piece
@@ -51,8 +51,9 @@ private const val EPSILON = 0.1f
 
 private const val OUTPUT_FILE = "dqn.cbor"
 
-class DQNModelTest {
-    val network = run {
+// DQNモデル
+class Phase1Test {
+    private val network = run {
         NetworkSerializer.register(DQNInputConverter::class)
         Network.create(
             port = port(DQNInputConverter(col = COL, row = ROW, turn = TURN)),
@@ -112,7 +113,7 @@ class DQNModelTest {
 
 // network -> 学習対象
 // opponent -> 対戦相手
-class DQNAgent(
+private class DQNAgent(
     val network: Network.Src1.Sink1<List<Board>, Batch<IOType.D1>>,
     val opponent: (boards: List<Board>) -> List<Pair<Int, Int>>,
     val batchSize: Int = BATCH_SIZE,
@@ -231,7 +232,7 @@ class DQNAgent(
     }
 }
 
-sealed interface BufferData {
+private sealed interface BufferData {
     val current: Board
     val coordinate: Pair<Int, Int>
 

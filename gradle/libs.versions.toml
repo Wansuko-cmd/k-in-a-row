@@ -10,7 +10,7 @@ androidx = "1.19.0"
 androidx-lifecycle-runtime = "2.11.0"
 
 # knist
-knist = "0.0.32-alpha02"
+knist = "0.0.32-alpha03"
 okio = "3.17.0"
 
 # Compose
